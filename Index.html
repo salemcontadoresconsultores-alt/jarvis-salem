@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>JARVIS SALEM — Prueba de voz</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at top,#1e3a5f,#0b1220 60%);color:#f8fafc;display:flex;justify-content:center;align-items:center;padding:20px}
+main{width:min(100%,480px);background:#111c2e;border:1px solid #334155;border-radius:24px;padding:24px;box-shadow:0 20px 60px #0005}
+.brand{text-align:center;color:#93c5fd;font-size:.8rem;letter-spacing:.18em;font-weight:700}
+h1{text-align:center;margin:8px 0 4px;font-size:2rem}
+.sub{text-align:center;color:#cbd5e1;margin:0 0 22px}
+#status{padding:12px;border-radius:12px;background:#1e293b;color:#cbd5e1;text-align:center;margin-bottom:14px;font-size:.92rem}
+button{border:0;border-radius:14px;padding:14px 16px;font-size:1rem;font-weight:700;cursor:pointer}
+#talk{width:100%;background:#2563eb;color:white;min-height:58px}
+#talk:disabled{opacity:.55}
+#say{width:100%;background:#334155;color:#fff;margin-top:10px}
+textarea{width:100%;min-height:100px;resize:vertical;margin-top:14px;padding:13px;border-radius:12px;border:1px solid #475569;background:#0b1220;color:#fff;font:inherit}
+.note{font-size:.82rem;color:#94a3b8;line-height:1.5;margin-top:16px}
+</style>
+</head>
+<body>
+<main>
+  <div class="brand">SALEM · ASISTENTE PERSONAL</div>
+  <h1>JARVIS</h1>
+  <p class="sub">Primera prueba de voz</p>
+  <div id="status" role="status">Listo. Pulsa el botón y di una frase corta.</div>
+  <button id="talk">🎙️ Pulsar para hablar</button>
+  <textarea id="result" placeholder="Aquí aparecerá lo que JARVIS entendió..." aria-label="Texto reconocido"></textarea>
+  <button id="say">🔊 Leer respuesta de prueba</button>
+  <p class="note">Esta versión solo prueba voz a texto y lectura en voz alta. No accede al correo, calendario ni otros datos. El reconocimiento puede requerir conexión y permiso de micrófono.</p>
+</main>
+<script>
+const statusEl=document.getElementById('status');
+const resultEl=document.getElementById('result');
+const talk=document.getElementById('talk');
+const say=document.getElementById('say');
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+function speak(text){
+  if(!('speechSynthesis' in window)){statusEl.textContent='Este navegador no ofrece lectura en voz alta.';return;}
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang='es-PE'; u.rate=0.95; u.pitch=0.95;
+  window.speechSynthesis.speak(u);
+}
+talk.addEventListener('click',()=>{
+  if(!SpeechRecognition){statusEl.textContent='Este navegador no permite reconocimiento de voz aquí. Abre la página en Google Chrome actualizado.';return;}
+  try{
+    const rec=new SpeechRecognition();
+    rec.lang='es-PE'; rec.continuous=false; rec.interimResults=false; rec.maxAlternatives=1;
+    statusEl.textContent='Escuchando… habla ahora.';
+    talk.disabled=true;
+    rec.onresult=(e)=>{
+      const text=e.results[0][0].transcript;
+      resultEl.value=text;
+      statusEl.textContent='He entendido tu frase. Ahora probaré la respuesta hablada.';
+      speak('Te he escuchado decir: '+text);
+    };
+    rec.onerror=(e)=>{statusEl.textContent='No se pudo reconocer la voz: '+e.error+'. Revisa el permiso del micrófono e inténtalo de nuevo.';};
+    rec.onend=()=>{talk.disabled=false;if(statusEl.textContent==='Escuchando… habla ahora.')statusEl.textContent='No se detectó una frase. Pulsa y prueba otra vez.';};
+    rec.start();
+  }catch(e){talk.disabled=false;statusEl.textContent='No se pudo iniciar el micrófono. Prueba desde una página segura HTTPS en Chrome.';}
+});
+say.addEventListener('click',()=>{
+  const text=resultEl.value.trim();
+  speak(text?'JARVIS está funcionando. He reconocido tu frase: '+text:'Hola. Soy JARVIS, tu asistente personal de SALEM. La prueba de voz está lista.');
+  statusEl.textContent='Reproduciendo respuesta de prueba.';
+});
+</script>
+</body>
+</html>
